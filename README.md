@@ -1,401 +1,178 @@
-# Neovim Configuration
+# Dotfiles
 
-A modern Neovim configuration migrated from a long-standing Vim + Vundle setup. This config preserves muscle memory and workflows while embracing Neovim-native features and Lua-based configuration.
+Terminal-first development environment: **Neovim** + **tmux** + **zsh** (oh-my-zsh) + **iTerm2**.
 
-## Philosophy
+Works as a local macOS setup and as a devcontainer/Codespaces dotfiles repository.
 
-This configuration follows several guiding principles:
+## Quick Start
 
-1. **Preserve muscle memory** - Key mappings match the original Vim config where possible
-2. **Modern tooling** - Use Neovim-native features (LSP, Treesitter) instead of legacy solutions
-3. **Clarity over cleverness** - Code is heavily commented for future maintenance
-4. **Terminal-first** - No GUI assumptions, works perfectly in iTerm or any terminal
-5. **AI-assisted development** - Codeium for inline completions, Claude Code for repo-aware editing
+```bash
+# Clone
+git clone git@github.com:Joyvis/dotfiles.git ~/dotfiles
+cd ~/dotfiles
 
-## How This Differs from Classic Vim
+# Install (auto-detects macOS vs container)
+./install.sh
 
-| Classic Vim | This Neovim Config |
-|-------------|-------------------|
-| Vundle for plugins | lazy.nvim (faster, Lua-native) |
-| ctrlp.vim | Telescope (better UI, more features) |
-| NERDTree | nvim-tree (Lua-native, faster) |
-| tcomment | Comment.nvim |
-| vim-snipmate + supertab | nvim-cmp + LuaSnip |
-| Regex syntax highlighting | Treesitter (AST-based, more accurate) |
-| No language server | Native LSP with mason.nvim |
-| vimscript configuration | Lua configuration |
-
-## Directory Structure
-
-```
-nvim/
-├── init.lua              # Bootstrap file
-├── lua/
-│   ├── core/
-│   │   ├── options.lua   # Editor settings (line numbers, tabs, etc.)
-│   │   ├── keymaps.lua   # All key mappings
-│   │   └── autocmds.lua  # Autocommands (filetype settings, etc.)
-│   └── plugins/
-│       └── init.lua      # Plugin declarations and configurations
-├── README.md             # This file
-└── install.sh            # Setup script for new machines
+# Start a new shell
+exec zsh
 ```
 
-## Key Mappings
+## What's Included
 
-Leader key is `<Space>`.
+| Tool | Config | Highlights |
+|------|--------|------------|
+| **Neovim** | `nvim/.config/nvim/` | Lua config, lazy.nvim, native LSP (0.11+), Treesitter, Telescope, Dracula theme |
+| **tmux** | `tmux/.tmux.conf` | `C-a` prefix, vim-style navigation, vi copy-mode, mouse, true-color |
+| **zsh** | `zsh/.zshrc` | oh-my-zsh, git plugin, nvim aliases, `.zshrc.local` pattern |
+| **iTerm2** | `iterm2/profiles.json` | Dracula colors, JetBrains Mono Nerd Font, dynamic profile |
 
-### Essential Mappings (Preserved from Vim)
+## Install Script
+
+The installer is environment-aware and idempotent:
+
+```bash
+./install.sh              # Auto-detect (default)
+./install.sh --local      # Force macOS mode (Homebrew)
+./install.sh --container  # Force container mode (apt-get)
+```
+
+**macOS**: Installs Homebrew deps (neovim, tmux, ripgrep, fd, fzf), symlinks configs, sets up iTerm2 dynamic profile.
+
+**Container**: Installs via apt-get, downloads Neovim stable from GitHub if apt version is too old, installs oh-my-zsh, sets zsh as default shell.
+
+### Machine-Specific Config
+
+Version managers and credentials go in `~/.zshrc.local` (not tracked by git):
+
+```bash
+cp ~/dotfiles/zsh/.zshrc.local.example ~/.zshrc.local
+# Edit with your pyenv, rbenv, nvm, gvm, etc.
+```
+
+## Devcontainer / Codespaces
+
+### VS Code User Settings (Recommended)
+
+Add to your global `settings.json` — applies to all devcontainers:
+
+```json
+{
+  "dotfiles.repository": "Joyvis/dotfiles",
+  "dotfiles.installCommand": "install.sh",
+  "dotfiles.targetPath": "~/dotfiles"
+}
+```
+
+### GitHub Codespaces
+
+Set your dotfiles repo at [github.com/settings/codespaces](https://github.com/settings/codespaces).
+
+### Devcontainer CLI
+
+```bash
+devcontainer up --workspace-folder . \
+  --dotfiles-repository https://github.com/Joyvis/dotfiles \
+  --dotfiles-install-command install.sh
+```
+
+### Testing
+
+```bash
+# Build and test in Docker
+docker build -t dotfiles-test -f- . <<'EOF'
+FROM mcr.microsoft.com/devcontainers/base:ubuntu
+COPY . /home/vscode/dotfiles
+RUN cd /home/vscode/dotfiles && ./install.sh
+USER vscode
+CMD ["zsh"]
+EOF
+docker run -it dotfiles-test
+```
+
+## Neovim
+
+### Key Mappings
+
+Leader: `Space` | Exit insert: `jj` | Arrow keys: disabled
 
 | Mapping | Action |
 |---------|--------|
-| `jj` | Exit insert mode |
-| `<Leader>q` | Toggle file tree |
-| `<Leader><CR>` | Clear search highlighting |
-| `<Leader>p` / `<Leader>n` / `<Leader>d` | Previous/Next/Delete buffer |
-| `<Leader>c` | Run tests in current file |
-| `<Leader>s` | Run nearest test |
-| `<Leader>t` | Jump to alternate file (Rails) |
-| `<F12>` | Convert Ruby hash rockets to new syntax |
-| Arrow keys | Disabled (use hjkl) |
-
-### Telescope (Fuzzy Finding)
-
-| Mapping | Action |
-|---------|--------|
-| `<Leader>ff` | Find files |
-| `<Leader>fg` | Live grep (search content) |
+| `<Leader>q` | Toggle file tree (nvim-tree) |
+| `<Leader>ff` / `<C-p>` | Find files (Telescope) |
+| `<Leader>fg` | Live grep |
 | `<Leader>fb` | List buffers |
-| `<Leader>fh` | Help tags |
-| `<Leader>fr` | Recent files |
-| `<C-p>` | Find files (Ctrl-P muscle memory) |
+| `<Leader>p` / `<Leader>n` / `<Leader>d` | Prev/Next/Delete buffer |
+| `gd` / `gr` / `K` | Go to definition / references / hover |
+| `<Leader>rn` / `<Leader>ca` | Rename / code action |
+| `<Leader>c` / `<Leader>s` | Run test file / nearest test |
+| `<Leader>t` | Rails alternate file |
+| `<Leader>gs` / `<Leader>gb` | Git status / blame |
 
-### LSP (Language Server)
-
-| Mapping | Action |
-|---------|--------|
-| `gd` | Go to definition |
-| `gr` | Go to references |
-| `K` | Hover documentation |
-| `<Leader>rn` | Rename symbol |
-| `<Leader>ca` | Code action |
-| `<Leader>lf` | Format buffer |
-| `[d` / `]d` | Previous/Next diagnostic |
-
-### Git
-
-| Mapping | Action |
-|---------|--------|
-| `<Leader>gs` | Git status (fugitive) |
-| `<Leader>gb` | Git blame |
-| `<Leader>gd` | Git diff |
-| `]h` / `[h` | Next/Previous hunk |
-| `<Leader>hp` | Preview hunk |
-
-### AI Completions (Codeium)
-
-| Mapping | Action |
-|---------|--------|
-| `<C-g>` | Accept Codeium suggestion |
-| `<M-]>` | Next suggestion (Alt+]) |
-| `<M-[>` | Previous suggestion (Alt+[) |
-| `<M-\>` | Clear suggestion (Alt+\) |
-
-## Plugins
+### Plugins
 
 | Plugin | Purpose |
 |--------|---------|
-| **lazy.nvim** | Plugin manager (replaces Vundle) |
-| **nvim-tree** | File explorer (replaces NERDTree) |
-| **telescope.nvim** | Fuzzy finder (replaces ctrlp + fzf) |
-| **nvim-treesitter** | Syntax highlighting and parsing |
-| **vim.lsp** | Native LSP support (Neovim 0.11+) |
-| **mason.nvim** | LSP server installer |
-| **nvim-cmp** | Autocompletion (replaces supertab) |
-| **LuaSnip** | Snippets (replaces snipmate) |
-| **codeium.vim** | AI inline completions |
-| **Comment.nvim** | Commenting (replaces tcomment) |
-| **nvim-autopairs** | Auto-close brackets |
-| **nvim-ts-autotag** | Auto-close HTML tags |
-| **vim-surround** | Surround text objects |
-| **vim-fugitive** | Git integration |
-| **gitsigns.nvim** | Git status in gutter |
-| **vim-rails** | Rails navigation |
-| **vim-test** | Test runner |
-| **lualine.nvim** | Status line |
-| **which-key.nvim** | Keybinding hints |
-| **indent-blankline** | Indentation guides |
-| **PaperColor** | Colorscheme |
-| **emmet-vim** | HTML/CSS expansion |
+| lazy.nvim | Plugin manager |
+| nvim-tree | File explorer |
+| telescope.nvim | Fuzzy finder |
+| nvim-treesitter | Syntax highlighting |
+| mason.nvim | LSP server installer |
+| nvim-cmp + LuaSnip | Autocompletion + snippets |
+| codeium.vim | AI inline completions |
+| vim-fugitive + gitsigns | Git integration |
+| vim-rails + vim-test | Ruby/Rails workflow |
+| lualine.nvim | Status line |
+| Comment.nvim | Commenting |
+| which-key.nvim | Keybinding hints |
 
-## Setup on a New macOS Machine
+### LSP Servers (Mason)
 
-### Prerequisites
+ruby_lsp, solargraph, ts_ls, gopls, yamlls, lua_ls — auto-installed on file open.
 
-Before installing, ensure you have:
+## tmux
 
-1. **Neovim 0.9+** (0.10+ recommended for best performance)
-2. **A Nerd Font** installed and configured in your terminal
-   - Icons in file tree, statusline, and Telescope require a Nerd Font
-   - Recommended: [JetBrainsMono Nerd Font](https://www.nerdfonts.com/font-downloads)
-   - After installing, set your terminal's font to the Nerd Font variant
-3. **Git** for plugin management
-4. **A C compiler** (Xcode CLI tools on macOS) for telescope-fzf-native
+| Binding | Action |
+|---------|--------|
+| `C-a` | Prefix (replaces `C-b`) |
+| `\|` | Vertical split |
+| `-` | Horizontal split |
+| `h/j/k/l` | Navigate panes |
+| `H/J/K/L` | Resize panes |
+| `v` (copy-mode) | Begin selection |
+| `y` (copy-mode) | Yank to clipboard |
+| `r` | Reload config |
 
-```bash
-# Install prerequisites on macOS
-brew install neovim ripgrep fd fzf git
+## Structure
 
-# Install Nerd Font (example with JetBrainsMono)
-brew tap homebrew/cask-fonts
-brew install --cask font-jetbrains-mono-nerd-font
-
-# Verify Neovim version
-nvim --version  # Should be 0.9.0 or higher
 ```
-
-### Quick Start
-
-```bash
-# Clone this repository
-git clone https://github.com/YOUR_USERNAME/dotfiles-nvim.git ~/projects/dotfiles-nvim
-
-# Run the install script
-cd ~/projects/dotfiles-nvim/nvim
-chmod +x install.sh
-./install.sh
-
-# Open Neovim (plugins will auto-install on first launch)
-nvim
+dotfiles/
+├── install.sh
+├── nvim/.config/nvim/
+│   ├── init.lua
+│   ├── lazy-lock.json
+│   └── lua/
+│       ├── core/{options,keymaps,autocmds}.lua
+│       ├── plugins/init.lua
+│       └── theme/init.lua
+├── tmux/.tmux.conf
+├── zsh/
+│   ├── .zshrc
+│   └── .zshrc.local.example
+├── iterm2/profiles.json
+└── .devcontainer/devcontainer.json
 ```
-
-### Manual Setup
-
-If you prefer manual installation:
-
-```bash
-# 1. Install Homebrew dependencies
-brew install neovim ripgrep fd fzf
-
-# 2. Create config directory symlink
-mkdir -p ~/.config
-ln -sf ~/projects/dotfiles-nvim/nvim ~/.config/nvim
-
-# 3. Open Neovim (lazy.nvim will bootstrap automatically)
-nvim
-
-# 4. Wait for plugins to install, then run health check
-:checkhealth
-```
-
-### Installing LSP Servers
-
-LSP servers are managed by Mason and will auto-install when you open relevant files. You can also install them manually:
-
-```vim
-:Mason
-```
-
-Then press `i` on any server to install it. Pre-configured servers:
-
-| Server | Language | Notes |
-|--------|----------|-------|
-| **ruby_lsp** | Ruby | Preferred for Ruby 3.0+, modern features |
-| **solargraph** | Ruby | Fallback for older Ruby versions |
-| **ts_ls** | TypeScript/JavaScript | Full TypeScript support |
-| **gopls** | Go | Official Go language server |
-| **yamlls** | YAML | Schema validation for GitHub Actions, etc. |
-| **lua_ls** | Lua | For editing Neovim configuration |
-
-#### Ruby LSP Notes
-
-- **ruby_lsp** requires Ruby 3.0 or higher
-- If you're on an older Ruby version, use **solargraph** instead
-- Both are installed by default; the appropriate one will activate based on your project
-- For solargraph, you may want to add it to your project's Gemfile for best results
-
-### Codeium Setup
-
-Codeium provides AI-powered inline completions. Authenticate on first use:
-
-```vim
-:Codeium Auth
-```
-
-This opens a browser to authenticate with your Codeium account. After authentication, Codeium suggestions appear as ghost text while typing.
-
-## Vim and Neovim Coexistence
-
-This configuration lives entirely under `~/.config/nvim` and does not touch your existing Vim setup:
-
-- **Vim** uses `~/.vim/` and `~/.vimrc`
-- **Neovim** uses `~/.config/nvim/`
-
-You can run both editors side by side:
-
-```bash
-vim somefile.txt    # Opens in classic Vim with your existing config
-nvim somefile.txt   # Opens in Neovim with this new config
-```
-
-To fully migrate, you can alias vim to nvim in your shell config:
-
-```bash
-# Add to ~/.zshrc or ~/.bashrc (only when you're ready!)
-# alias vim="nvim"
-```
-
-## AI Tools: Codeium + Claude Code
-
-This setup uses two complementary AI tools:
-
-### Codeium (Inline Completions)
-- Runs inside Neovim
-- Provides real-time code suggestions as you type
-- Accept with `<C-g>`, cycle with `<C-;>` and `<C-,>`
-- Best for: completing the current line, boilerplate, obvious patterns
-
-### Claude Code (Terminal Chat)
-- Runs in your terminal alongside Neovim
-- Full repo awareness - can read and edit files
-- Best for: explaining code, refactoring, writing tests, complex changes
-- Usage: Run `claude` in your project directory
-
-**Workflow Example:**
-1. Use Codeium for quick completions while typing
-2. When stuck on a complex problem, switch to terminal and ask Claude Code
-3. Claude Code can edit files directly, then switch back to Neovim to review
 
 ## Troubleshooting
 
-### Run Health Check
-
 ```vim
-:checkhealth
+:checkhealth          " Diagnose Neovim issues
+:Lazy                 " Plugin status (S=sync, U=update)
+:Mason                " LSP server status (i=install)
 ```
-
-This will identify any missing dependencies or configuration issues.
-
-### Icons Not Displaying Correctly
-
-If you see boxes, question marks, or missing icons:
-
-1. **Install a Nerd Font** (see Prerequisites above)
-2. **Configure your terminal** to use the Nerd Font as the main font
-3. **Restart your terminal** after font installation
-
-Common terminal font settings:
-- **iTerm2**: Preferences → Profiles → Text → Font
-- **Alacritty**: Edit `~/.config/alacritty/alacritty.yml`, set `font.normal.family`
-- **WezTerm**: Edit `~/.wezterm.lua`, set `config.font`
-
-### Plugins Not Loading
-
-```vim
-:Lazy
-```
-
-Press `S` to sync plugins, `U` to update, `C` to check for issues.
-
-### LSP Not Working
-
-Check if the server is installed and attached:
-```vim
-:LspInfo
-```
-
-If no server is attached:
-1. Check `:Mason` to see if the server is installed
-2. Press `i` on the server name to install it
-3. Reopen the file to trigger attachment
-
-### Ruby LSP Issues
-
-If ruby_lsp fails to start:
-- Ensure you're using Ruby 3.0+ (`ruby --version`)
-- For older Ruby, solargraph should auto-activate as fallback
-- Check `:LspLog` for detailed error messages
-
-### Treesitter Errors
-
-Update all parsers:
-```vim
-:TSUpdate
-```
-
-If a specific parser fails:
-```vim
-:TSInstall <language>
-```
-
-### Telescope Previewer Not Showing Syntax Highlighting
-
-This is fixed in the current configuration. If you still see issues:
-1. Ensure Treesitter parsers are installed: `:TSInstall <language>`
-2. Open a file of that type first to trigger parser loading
-3. Treesitter loads on VeryLazy event, so first file open triggers it
-
-### Slow Startup
-
-Check which plugins take longest:
-```vim
-:Lazy profile
-```
-
-### Codeium Not Working
-
-1. Ensure you've authenticated: `:Codeium Auth`
-2. Check status: `:Codeium Status`
-3. If issues persist, try `:Codeium Disable` then `:Codeium Enable`
-
-### Reset Everything
 
 ```bash
-# Remove lazy.nvim cache and data
-rm -rf ~/.local/share/nvim
-rm -rf ~/.local/state/nvim
-rm -rf ~/.cache/nvim
-
-# Reopen Neovim (will reinstall all plugins)
-nvim
+# Reset Neovim state completely
+rm -rf ~/.local/share/nvim ~/.local/state/nvim ~/.cache/nvim
+nvim  # Reinstalls everything on launch
 ```
-
-### Common :checkhealth Warnings
-
-| Warning | Resolution |
-|---------|------------|
-| "python3 provider not found" | Expected - Python provider is intentionally disabled |
-| "ruby provider not found" | Expected - Ruby provider is intentionally disabled |
-| "clipboard: No clipboard tool found" | Install `pbcopy` (macOS has this by default) |
-| "ripgrep not found" | Run `brew install ripgrep` |
-
-## Customization
-
-### Adding a New Plugin
-
-Edit `lua/plugins/init.lua` and add a new entry:
-
-```lua
-{
-  "author/plugin-name",
-  config = function()
-    require("plugin-name").setup({})
-  end,
-},
-```
-
-### Adding a Keymap
-
-Edit `lua/core/keymaps.lua`:
-
-```lua
-map("n", "<Leader>x", ":SomeCommand<CR>", { desc = "Description" })
-```
-
-### Adding a Filetype Setting
-
-Edit `lua/core/autocmds.lua` and add to the appropriate augroup.
-
-## License
-
-MIT - Do whatever you want with this configuration.

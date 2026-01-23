@@ -1,0 +1,17 @@
+# Machine-specific (not tracked)
+.zshrc.local
+
+# zsh compiled files
+*.zwc
+
+# iTerm2 full plist (too noisy, use profiles.json instead)
+com.googlecode.iterm2.plist
+
+# Neovim plugin state (regenerated on launch)
+nvim/.config/nvim/plugin/
+
+# macOS
+.DS_Store
+
+# Plan file (development artifact)
+PLAN.md
