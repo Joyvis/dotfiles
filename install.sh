@@ -98,6 +98,17 @@ install_deps_container() {
         print_success "Installed: ${to_install[*]}"
     fi
 
+    # Ensure en_US.UTF-8 locale is available
+    if ! locale -a 2>/dev/null | grep -qi "en_US.utf"; then
+        print_status "Generating en_US.UTF-8 locale..."
+        sudo apt-get install -y -qq locales
+        sudo sed -i 's/# en_US.UTF-8/en_US.UTF-8/' /etc/locale.gen
+        sudo locale-gen en_US.UTF-8
+        print_success "en_US.UTF-8 locale generated"
+    else
+        print_success "en_US.UTF-8 locale already available"
+    fi
+
     # Neovim from apt is often outdated; install latest stable if version < 0.11
     local nvim_major nvim_minor
     nvim_major=$(nvim --version 2>/dev/null | head -1 | sed -n 's/.*v\([0-9]*\)\.\([0-9]*\).*/\1/p' || echo "0")

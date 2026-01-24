@@ -23,7 +23,7 @@ vim.g.maplocalleader = " "
 --------------------------------------------------------------------------------
 -- Language & Encoding
 --------------------------------------------------------------------------------
-vim.cmd("language en_US.UTF-8")
+pcall(vim.cmd, "language en_US.UTF-8")
 opt.encoding = "utf-8"
 opt.fileencoding = "utf-8"
 
