@@ -238,6 +238,20 @@ if [[ "$ENV" == "container" ]]; then
 fi
 
 # ==============================================================================
+# TPM (Tmux Plugin Manager)
+# ==============================================================================
+
+print_status "Checking TPM (Tmux Plugin Manager)..."
+
+if [[ -d "$HOME/.tmux/plugins/tpm" ]]; then
+    print_success "TPM already installed"
+else
+    print_warning "Installing TPM..."
+    git clone https://github.com/tmux-plugins/tpm "$HOME/.tmux/plugins/tpm"
+    print_success "TPM installed"
+fi
+
+# ==============================================================================
 # Summary
 # ==============================================================================
 
@@ -258,6 +272,7 @@ echo "  Next steps:"
 echo "    1. Start a new shell (or run: exec zsh)"
 echo "    2. Open nvim — plugins install automatically on first launch"
 echo "    3. Run :Mason inside nvim to install LSP servers"
+echo "    4. Open tmux and press C-a I to install tmux plugins"
 echo ""
 if [[ "$ENV" == "local" ]]; then
 echo "  Local setup:"
