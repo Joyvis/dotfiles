@@ -148,6 +148,16 @@ else
     print_success "oh-my-zsh installed"
 fi
 
+# zsh-autosuggestions plugin
+ZSH_CUSTOM="${ZSH_CUSTOM:-$HOME/.oh-my-zsh/custom}"
+if [[ -d "$ZSH_CUSTOM/plugins/zsh-autosuggestions" ]]; then
+    print_success "zsh-autosuggestions already installed"
+else
+    print_warning "Installing zsh-autosuggestions..."
+    git clone https://github.com/zsh-users/zsh-autosuggestions "$ZSH_CUSTOM/plugins/zsh-autosuggestions"
+    print_success "zsh-autosuggestions installed"
+fi
+
 # ==============================================================================
 # Symlink Configs
 # ==============================================================================
